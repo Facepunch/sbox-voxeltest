@@ -16,3 +16,4 @@ tools_thumbnail_cache.bin
 *.xml
 *.dll
 *.pdb
+*_c
