@@ -1,5 +1,13 @@
 {
-    "sharedassets": "*.*",
-	"type": "game",
-	"ident": "facepunch.voxeltest"
+  "Title": "Facepunch Voxeltest",
+  "Type": "game",
+  "Org": "facepunch",
+  "Ident": "voxeltest",
+  "Schema": 1,
+  "HasAssets": true,
+  "AssetsPath": "",
+  "ResourcePaths": null,
+  "HasCode": true,
+  "CodePath": "code",
+  "RootNamespace": "Sandbox"
 }
