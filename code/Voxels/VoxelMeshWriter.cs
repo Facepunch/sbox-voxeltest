@@ -51,7 +51,10 @@ namespace Voxels
 
 		private bool _isInPool;
 
-		private Vector3[] _normals;
+		private Vector3[] _chunkNormals;
+
+        private readonly Vector3[] _cubeNormals = new Vector3[8];
+        private readonly DualEdge[] _cubeDualEdges = new DualEdge[12];
 
 		public List<VoxelVertex> Vertices { get; } = new List<VoxelVertex>();
 		public List<Vector3> CollisionVertices { get; } = new List<Vector3>();
@@ -83,9 +86,9 @@ namespace Voxels
 						$"must have a margin of 1 from the full size of the array." );
 				}
 
-				if ( _normals == null || _normals.Length < data.Length )
+				if ( _chunkNormals == null || _chunkNormals.Length < data.Length )
 				{
-					_normals = new Vector3[data.Length];
+					_chunkNormals = new Vector3[data.Length];
 				}
 
 				CalculateNormals( data, size, min, max );
@@ -101,8 +104,6 @@ namespace Voxels
 			max /= step;
 
 			var scale = new Vector3( 1f / (max.x - min.x), 1f / (max.y - min.y), 1f / (max.z - min.z) );
-
-			Span<Vector3> normals = stackalloc Vector3[8];
 
 			var xIndexOffset = min.x * xStride;
 
@@ -122,10 +123,10 @@ namespace Voxels
 
 					if ( updateNormals )
 					{
-						normals[0] = _normals[i0];
-						normals[2] = _normals[i1];
-						normals[4] = _normals[i2];
-						normals[6] = _normals[i3];
+                        _cubeNormals[0] = _chunkNormals[i0];
+                        _cubeNormals[2] = _chunkNormals[i1];
+                        _cubeNormals[4] = _chunkNormals[i2];
+                        _cubeNormals[6] = _chunkNormals[i3];
 					}
 
 					var x0hash
@@ -148,10 +149,10 @@ namespace Voxels
 
 						if ( updateNormals )
 						{
-							normals[1] = _normals[i0];
-							normals[3] = _normals[i1];
-							normals[5] = _normals[i2];
-							normals[7] = _normals[i3];
+                            _cubeNormals[1] = _chunkNormals[i0];
+                            _cubeNormals[3] = _chunkNormals[i1];
+                            _cubeNormals[5] = _chunkNormals[i2];
+                            _cubeNormals[7] = _chunkNormals[i3];
 						}
 
 						var x1hash
@@ -167,7 +168,7 @@ namespace Voxels
 							WriteCube( new Vector3i( x, y, z ), scale,
 								x0y0z0, x1y0z0, x0y1z0, x1y1z0,
 								x0y0z1, x1y0z1, x0y1z1, x1y1z1,
-								normalStyle, normals, render, collision );
+								normalStyle, render, collision );
 						}
 
 						x0y0z0 = x1y0z0;
@@ -179,10 +180,10 @@ namespace Voxels
 
 						if ( updateNormals )
 						{
-							normals[0] = normals[1];
-							normals[2] = normals[3];
-							normals[4] = normals[5];
-							normals[6] = normals[7];
+                            _cubeNormals[0] = _cubeNormals[1];
+                            _cubeNormals[2] = _cubeNormals[3];
+                            _cubeNormals[4] = _cubeNormals[5];
+                            _cubeNormals[6] = _cubeNormals[7];
 						}
 					}
 				}
@@ -216,7 +217,7 @@ namespace Voxels
 
 						var diff = new Vector3( xNeg - xPos, yNeg - yPos, zNeg - zPos );
 
-						_normals[index] = diff.Normal;
+						_chunkNormals[index] = diff.Normal;
 					}
 				}
 			}
@@ -234,8 +235,7 @@ namespace Voxels
 			return new EdgeIntersection( index, val0, val1, pos0 + (pos1 - pos0) * t );
 		}
 
-		private int ProcessFace( in Span<DualEdge> dualEdgeMap,
-			EdgeIntersection edge0, EdgeIntersection edge1,
+		private int ProcessFace( EdgeIntersection edge0, EdgeIntersection edge1,
 			EdgeIntersection edge2, EdgeIntersection edge3 )
 		{
 			var hash
@@ -252,42 +252,42 @@ namespace Voxels
 				case 0b0011:
 				{
 					var dualEdge = new DualEdge( edge0, edge1 );
-					dualEdgeMap[dualEdge.Index0] = dualEdge;
+                    _cubeDualEdges[dualEdge.Index0] = dualEdge;
 					return 1;
 				}
 
 				case 0b0101:
 				{
 					var dualEdge = new DualEdge( edge0, edge2 );
-					dualEdgeMap[dualEdge.Index0] = dualEdge;
+                    _cubeDualEdges[dualEdge.Index0] = dualEdge;
 					return 1;
 				}
 
 				case 0b1001:
 				{
 					var dualEdge = new DualEdge( edge0, edge3 );
-					dualEdgeMap[dualEdge.Index0] = dualEdge;
+                    _cubeDualEdges[dualEdge.Index0] = dualEdge;
 					return 1;
 				}
 
 				case 0b0110:
 				{
 					var dualEdge = new DualEdge( edge1, edge2 );
-					dualEdgeMap[dualEdge.Index0] = dualEdge;
+                    _cubeDualEdges[dualEdge.Index0] = dualEdge;
 					return 1;
 				}
 
 				case 0b1010:
 				{
 					var dualEdge = new DualEdge( edge1, edge3 );
-					dualEdgeMap[dualEdge.Index0] = dualEdge;
+                    _cubeDualEdges[dualEdge.Index0] = dualEdge;
 					return 1;
 				}
 
 				case 0b1100:
 				{
 					var dualEdge = new DualEdge( edge2, edge3 );
-					dualEdgeMap[dualEdge.Index0] = dualEdge;
+                    _cubeDualEdges[dualEdge.Index0] = dualEdge;
 					return 1;
 				}
 
@@ -313,8 +313,8 @@ namespace Voxels
 						dualEdge1 = new DualEdge( edge1, edge2 );
 					}
 
-					dualEdgeMap[dualEdge0.Index0] = dualEdge0;
-					dualEdgeMap[dualEdge1.Index0] = dualEdge1;
+                    _cubeDualEdges[dualEdge0.Index0] = dualEdge0;
+                    _cubeDualEdges[dualEdge1.Index0] = dualEdge1;
 					return 2;
 				}
 
@@ -332,12 +332,12 @@ namespace Voxels
 		private static readonly Vector3 X0Y1Z1 = new Vector3( 0f, 1f, 1f );
 		private static readonly Vector3 X1Y1Z1 = new Vector3( 1f, 1f, 1f );
 
-		private Vector3 InterpolateNormal( in Span<Vector3> normals, Vector3 pos )
+		private Vector3 InterpolateNormal( Vector3 pos )
 		{
-			var x00 = Vector3.Lerp( normals[0], normals[1], pos.x );
-			var x10 = Vector3.Lerp( normals[2], normals[3], pos.x );
-			var x01 = Vector3.Lerp( normals[4], normals[5], pos.x );
-			var x11 = Vector3.Lerp( normals[6], normals[7], pos.x );
+			var x00 = Vector3.Lerp(_cubeNormals[0], _cubeNormals[1], pos.x );
+			var x10 = Vector3.Lerp(_cubeNormals[2], _cubeNormals[3], pos.x );
+			var x01 = Vector3.Lerp(_cubeNormals[4], _cubeNormals[5], pos.x );
+			var x11 = Vector3.Lerp(_cubeNormals[6], _cubeNormals[7], pos.x );
 
 			var xy0 = Vector3.Lerp( x00, x10, pos.y );
 			var xy1 = Vector3.Lerp( x01, x11, pos.y );
@@ -351,7 +351,6 @@ namespace Voxels
 			Voxel x0y0z1, Voxel x1y0z1,
 			Voxel x0y1z1, Voxel x1y1z1,
 			NormalStyle normalStyle,
-			in Span<Vector3> normals,
 			bool render, bool collision)
 		{
 			// Find out if / where the surface intersects each edge of the cube.
@@ -374,18 +373,16 @@ namespace Voxels
 			// Each of these "dual edges" will be stored in a table, indexed by the first
 			// intersection edge.
 
-			Span<DualEdge> dualEdgeMap = stackalloc DualEdge[12];
-
-			dualEdgeMap.Clear();
+            Array.Clear( _cubeDualEdges );
 
 			var dualEdgeCount = 0;
 
-			dualEdgeCount += ProcessFace( dualEdgeMap, +edgeXMinZMin, +edgeXMinYMax, -edgeXMinZMax, -edgeXMinYMin );
-			dualEdgeCount += ProcessFace( dualEdgeMap, +edgeXMaxZMax, -edgeXMaxYMax, -edgeXMaxZMin, +edgeXMaxYMin );
-			dualEdgeCount += ProcessFace( dualEdgeMap, +edgeXMinYMin, +edgeYMinZMax, -edgeXMaxYMin, -edgeYMinZMin );
-			dualEdgeCount += ProcessFace( dualEdgeMap, +edgeXMaxYMax, -edgeYMaxZMax, -edgeXMinYMax, +edgeYMaxZMin );
-			dualEdgeCount += ProcessFace( dualEdgeMap, +edgeXMaxZMin, -edgeYMaxZMin, -edgeXMinZMin, +edgeYMinZMin );
-			dualEdgeCount += ProcessFace( dualEdgeMap, +edgeXMinZMax, +edgeYMaxZMax, -edgeXMaxZMax, -edgeYMinZMax );
+			dualEdgeCount += ProcessFace( +edgeXMinZMin, +edgeXMinYMax, -edgeXMinZMax, -edgeXMinYMin );
+			dualEdgeCount += ProcessFace( +edgeXMaxZMax, -edgeXMaxYMax, -edgeXMaxZMin, +edgeXMaxYMin );
+			dualEdgeCount += ProcessFace( +edgeXMinYMin, +edgeYMinZMax, -edgeXMaxYMin, -edgeYMinZMin );
+			dualEdgeCount += ProcessFace( +edgeXMaxYMax, -edgeYMaxZMax, -edgeXMinYMax, +edgeYMaxZMin );
+			dualEdgeCount += ProcessFace( +edgeXMaxZMin, -edgeYMaxZMin, -edgeXMinZMin, +edgeYMinZMin );
+			dualEdgeCount += ProcessFace( +edgeXMinZMax, +edgeYMaxZMax, -edgeXMaxZMax, -edgeYMinZMax );
 
 			if ( dualEdgeCount == 0 )
 			{
@@ -405,7 +402,7 @@ namespace Voxels
 
 			for (var i = 0; i < 12 && dualEdgeCount > 0; ++i)
             {
-				var first = dualEdgeMap[i];
+				var first = _cubeDualEdges[i];
 				if (!first.Exists) continue;
 
 				// Start of an edge loop.
@@ -414,7 +411,7 @@ namespace Voxels
 				var next = first;
 
 				// Remove first edge in edge loop.
-				dualEdgeMap[i] = default;
+                _cubeDualEdges[i] = default;
 				--dualEdgeCount;
 
 				var a = offset + first.Pos0 * scale;
@@ -433,17 +430,17 @@ namespace Voxels
 
 				if ( render && normalStyle != NormalStyle.Flat )
 				{
-					aNorm = InterpolateNormal( normals, first.Pos0 );
-					bNorm = InterpolateNormal( normals, first.Pos1 );
+					aNorm = InterpolateNormal( first.Pos0 );
+					bNorm = InterpolateNormal( first.Pos1 );
 				}
 
 				// We skip the first edge, and break on the last edge, so
 				// we output a triangle every N-2 edges in the loop.
 
-				while ((next = dualEdgeMap[prev.Index1]).Exists)
+				while ((next = _cubeDualEdges[prev.Index1]).Exists)
 				{
 					// Remove edge from map.
-					dualEdgeMap[prev.Index1] = default;
+                    _cubeDualEdges[prev.Index1] = default;
 					--dualEdgeCount;
 
 					if ( next.Index1 == i ) break;
@@ -469,7 +466,7 @@ namespace Voxels
 
 							case NormalStyle.Smooth:
 								{
-									var cNorm = InterpolateNormal( normals, next.Pos1 );
+									var cNorm = InterpolateNormal( next.Pos1 );
 
 									var tangent = (b - a).Normal;
 

@@ -27,7 +27,7 @@ namespace VoxelTest
 
 		[Net] public VoxelVolume Voxels { get; private set; }
 
-		[ServerCmd( "clear_voxels" )]
+		[ConCmd.Server( "clear_voxels" )]
 		public static void ClearVoxels()
 		{
 			Current.Voxels?.Delete();
@@ -48,7 +48,7 @@ namespace VoxelTest
 			return Voxels;
 		}
 
-		[ServerCmd( "spawn_spheres" )]
+		[ConCmd.Server( "spawn_spheres" )]
 		public static void SpawnSphere( int count = 1 )
 		{
 			var caller = ConsoleSystem.Caller;
@@ -71,7 +71,7 @@ namespace VoxelTest
 			Log.Info( $"Spawned {count} spheres in {timer.Elapsed.TotalMilliseconds:F2}ms" );
 		}
 
-		[ServerCmd( "spawn_boxes" )]
+		[ConCmd.Server( "spawn_boxes" )]
 		public static void SpawnBoxes( int count = 1 )
 		{
 			var caller = ConsoleSystem.Caller;

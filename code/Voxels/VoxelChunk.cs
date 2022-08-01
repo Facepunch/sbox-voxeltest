@@ -24,6 +24,10 @@ namespace Voxels
 			Data = data;
 			Size = size;
 
+            UsePhysicsCollision = true;
+
+            EnableAllCollisions = true;
+
 			CollisionBounds = new BBox( 0f, size );
 		}
 
@@ -79,7 +83,7 @@ namespace Voxels
 					{
 						EnableDrawing = false;
 						EnableShadowCasting = false;
-
+						
 						SetModel( "" );
 					}
 					else
@@ -118,8 +122,8 @@ namespace Voxels
 						EnableDrawing = true;
 						EnableShadowCasting = true;
 
-						SetModel( _model );
-					}
+                        Model = _model;
+                    }
 				}
 
 				if ( collision )
@@ -128,9 +132,9 @@ namespace Voxels
 
 					if ( writer.CollisionVertices.Count == 0 )
 					{
-						if ( PhysicsBody != null && PhysicsBody.IsValid() && PhysicsBody.ShapeCount > 0 )
+						if ( PhysicsBody != null && PhysicsBody.IsValid() )
 						{
-							PhysicsBody.RemoveShape( PhysicsBody.Shapes.First(), false );
+							PhysicsBody.ClearShapes();
 						}
 					}
 					else
@@ -141,11 +145,7 @@ namespace Voxels
 							SetupPhysicsFromAABB( PhysicsMotionType.Static, 0f, Size );
 						}
 
-						if ( PhysicsBody.ShapeCount > 0 )
-						{
-							PhysicsBody.RemoveShape( PhysicsBody.Shapes.First(), false );
-						}
-
+                        PhysicsBody.ClearShapes();
 						PhysicsBody.AddMeshShape( writer.CollisionVertices.ToArray(), writer.CollisionIndices.ToArray() );
 					}
 				}

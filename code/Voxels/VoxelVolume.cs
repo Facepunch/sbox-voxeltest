@@ -28,9 +28,9 @@ namespace Voxels
 			LocalSize = size;
 			ChunkSize = chunkSize;
 			ChunkSubdivisions = chunkSubdivisions;
-			NormalStyle = normalStyle;
+            NormalStyle = normalStyle;
 
-			_chunkScale = 1f / ChunkSize;
+            _chunkScale = 1f / ChunkSize;
 			_chunkCount = Vector3i.Ceiling( LocalSize * _chunkScale );
 			_chunkOffset = LocalSize * -0.5f;
 

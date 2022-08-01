@@ -11,7 +11,7 @@ namespace VoxelTest
 
 			Controller = new WalkController();
 			Animator = new StandardPlayerAnimator();
-			Camera = new ThirdPersonCamera();
+			CameraMode = new ThirdPersonCamera();
 
 			EnableAllCollisions = true;
 			EnableDrawing = true;
@@ -27,7 +27,7 @@ namespace VoxelTest
 
 			Controller = null;
 			Animator = null;
-			Camera = null;
+            CameraMode = null;
 
 			EnableAllCollisions = false;
 			EnableDrawing = false;
@@ -42,13 +42,13 @@ namespace VoxelTest
 			if ( !IsServer )
 				return;
 
-			if ( LastEdit > 1f / 60f && (Input.Down( InputButton.Attack1 ) || Input.Down( InputButton.Attack2 )) )
+			if ( LastEdit > 1f / 60f && (Input.Down( InputButton.PrimaryAttack ) || Input.Down( InputButton.SecondaryAttack )) )
 			{
 				var voxels = Game.Current.GetOrCreateVoxelVolume();
-				var pos = EyePos + EyeRot.Forward * 128f;
+				var pos = EyePosition + EyeRotation.Forward * 128f;
 				var transform = Matrix.CreateTranslation( pos );
 
-				if ( Input.Down( InputButton.Attack1 ) )
+				if ( Input.Down( InputButton.PrimaryAttack ) )
 				{
 					var shape = new SphereSdf( Vector3.Zero, 8f, 32f );
 					voxels.Add( shape, transform, 0 );
@@ -67,7 +67,7 @@ namespace VoxelTest
 				var r = Input.Rotation;
 				var ent = new Prop
 				{
-					Position = EyePos + r.Forward * 50,
+					Position = EyePosition + r.Forward * 50,
 					Rotation = r
 				};
 
