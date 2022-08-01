@@ -9,7 +9,8 @@ namespace Voxels
 		[Net] public float Size { get; private set; }
 
 		private Mesh _mesh;
-		private Model _model;
+        private PhysicsBody _body;
+        private PhysicsShape _shape;
 
 		private bool _meshInvalid;
 		private int _lastNetReadCount;
@@ -23,10 +24,6 @@ namespace Voxels
 		{
 			Data = data;
 			Size = size;
-
-            UsePhysicsCollision = true;
-
-            EnableAllCollisions = true;
 
 			CollisionBounds = new BBox( 0f, size );
 		}
@@ -110,19 +107,17 @@ namespace Voxels
 
 						_mesh.SetVertexRange( 0, writer.Vertices.Count );
 
-						if ( _model == null )
+						if ( Model == null )
 						{
 							var modelBuilder = new ModelBuilder();
 
 							modelBuilder.AddMesh( _mesh );
 
-							_model = modelBuilder.Create();
+                            Model = modelBuilder.Create();
 						}
 
 						EnableDrawing = true;
 						EnableShadowCasting = true;
-
-                        Model = _model;
                     }
 				}
 
@@ -132,21 +127,29 @@ namespace Voxels
 
 					if ( writer.CollisionVertices.Count == 0 )
 					{
-						if ( PhysicsBody != null && PhysicsBody.IsValid() )
-						{
-							PhysicsBody.ClearShapes();
+                        if ( _shape.IsValid() )
+                        {
+							_shape.Remove();
+                            _shape = null;
 						}
-					}
+                    }
 					else
 					{
-						if ( PhysicsBody == null || !PhysicsBody.IsValid() )
-						{
-							// Just to initialize PhysicsBody
-							SetupPhysicsFromAABB( PhysicsMotionType.Static, 0f, Size );
-						}
+                        if ( !_body.IsValid() )
+                        {
+                            _body = SetupPhysicsFromAABB( PhysicsMotionType.Static, 0f, Size ).GetBody( 0 );
+							_body.ClearShapes();
+                        }
 
-                        PhysicsBody.ClearShapes();
-						PhysicsBody.AddMeshShape( writer.CollisionVertices.ToArray(), writer.CollisionIndices.ToArray() );
+                        if ( !_shape.IsValid() )
+                        {
+                            _shape = _body.AddMeshShape( writer.CollisionVertices, writer.CollisionIndices );
+							_shape.AddTag( "solid" );
+						}
+                        else
+						{
+							_shape.UpdateMesh( writer.CollisionVertices, writer.CollisionIndices );
+						}
 					}
 				}
 			}
