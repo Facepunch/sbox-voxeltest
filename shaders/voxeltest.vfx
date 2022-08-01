@@ -105,7 +105,7 @@ PS
         float4 rmaZ = i.vNormalWs.z > 0.0 ? Tex2DS( g_tTopRma, TextureFiltering, uvZ ) : Tex2DS( g_tRma, TextureFiltering, uvZ );
         float4 rma = rmaX * triblend.x + rmaY * triblend.y + rmaZ * triblend.z;
 
-		Material m = ToMaterial( col, norm, rma, g_flTintColor  );
+		Material m = ToMaterial( i, col, norm, rma, g_flTintColor  );
 
 		return FinalizePixelMaterial( i, m );
 	}
