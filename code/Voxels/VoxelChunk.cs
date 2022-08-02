@@ -137,18 +137,27 @@ namespace Voxels
 					{
                         if ( !_body.IsValid() )
                         {
-                            _body = SetupPhysicsFromAABB( PhysicsMotionType.Static, 0f, Size ).GetBody( 0 );
-							_body.ClearShapes();
+                            SetupPhysicsFromAABB(PhysicsMotionType.Static, 0f, Size);
+
+                            _body = PhysicsBody;
+
+                            if ( _body.IsValid() )
+							{
+								_body.ClearShapes();
+							}
                         }
 
-                        if ( !_shape.IsValid() )
-                        {
-                            _shape = _body.AddMeshShape( writer.CollisionVertices, writer.CollisionIndices );
-							_shape.AddTag( "solid" );
-						}
-                        else
+                        if ( _body.IsValid() )
 						{
-							_shape.UpdateMesh( writer.CollisionVertices, writer.CollisionIndices );
+							if ( !_shape.IsValid() )
+                            {
+                                _shape = _body.AddMeshShape( writer.CollisionVertices, writer.CollisionIndices );
+                                _shape.AddTag( "solid" );
+                            }
+                            else
+                            {
+                                _shape.UpdateMesh( writer.CollisionVertices, writer.CollisionIndices );
+                            }
 						}
 					}
 				}
