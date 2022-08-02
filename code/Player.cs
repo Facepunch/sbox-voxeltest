@@ -5,7 +5,8 @@ namespace VoxelTest
 {
 	partial class Player : Sandbox.Player
     {
-        private TimeSince _lastJump;
+		[Net]
+		public Cursor Cursor { get; set; }
 
 		public override void Respawn()
 		{
@@ -19,6 +20,9 @@ namespace VoxelTest
 			EnableDrawing = true;
 			EnableHideInFirstPerson = true;
 			EnableShadowInFirstPerson = true;
+			
+            Cursor ??= new Cursor();
+            Cursor.Owner = this;
 
 			base.Respawn();
 		}
@@ -28,14 +32,13 @@ namespace VoxelTest
 			base.OnKilled();
 
 			Controller = null;
-			Animator = null;
-            CameraMode = null;
 
 			EnableAllCollisions = false;
 			EnableDrawing = false;
 		}
 
 		public TimeSince LastEdit { get; private set; }
+        public TimeSince LastJump { get; private set; }
 
 		public override void Simulate( Client cl )
 		{
@@ -43,7 +46,7 @@ namespace VoxelTest
 
             if ( Input.Pressed( InputButton.Jump ) )
             {
-                if ( _lastJump < 0.25f )
+                if (LastJump < 0.25f )
                 {
                     if ( Controller is NoclipController )
 					{
@@ -55,8 +58,13 @@ namespace VoxelTest
 					}
                 }
 
-                _lastJump = 0f;
-            }
+                LastJump = 0f;
+			}
+
+			var pos = EyePosition + EyeRotation.Forward * 160f;
+
+            Cursor.Position = pos;
+            Cursor.Scale = 2f;
 
 			if ( !IsServer )
 				return;
@@ -64,7 +72,6 @@ namespace VoxelTest
 			if ( LastEdit > 1f / 60f && (Input.Down( InputButton.PrimaryAttack ) || Input.Down( InputButton.SecondaryAttack )) )
 			{
 				var voxels = Game.Current.GetOrCreateVoxelVolume();
-				var pos = EyePosition + EyeRotation.Forward * 128f;
 				var transform = Matrix.CreateTranslation( pos );
 
 				if ( Input.Down( InputButton.PrimaryAttack ) )
