@@ -1,3 +1,4 @@
+using System;
 using Sandbox;
 using Voxels;
 
@@ -5,8 +6,18 @@ namespace VoxelTest
 {
 	partial class Player : Sandbox.Player
     {
+        private const float BaseInnerRadius = 8f;
+        private const float BaseMaxDistance = 32f;
+
+        private const int BrushScaleSteps = 4;
+
+        private const float MinBrushScale = 0.5f;
+		private const float MaxBrushScale = 4f;
+
 		[Net]
 		public Cursor Cursor { get; set; }
+
+        [Net] public float BrushScale { get; set; } = 1f;
 
 		public override void Respawn()
 		{
@@ -61,10 +72,17 @@ namespace VoxelTest
                 LastJump = 0f;
 			}
 
-			var pos = EyePosition + EyeRotation.Forward * 160f;
+            if ( Input.MouseWheel != 0 )
+            {
+                BrushScale *= MathF.Pow( 2f, (float) Input.MouseWheel / BrushScaleSteps );
+            }
+
+            BrushScale = Math.Clamp( BrushScale, MinBrushScale, MaxBrushScale );
+
+			var pos = EyePosition + EyeRotation.Forward * (128f + BrushScale * 64f);
 
             Cursor.Position = pos;
-            Cursor.Scale = 2f;
+            Cursor.Scale = 2f * BrushScale;
 
 			if ( !IsServer )
 				return;
@@ -76,12 +94,12 @@ namespace VoxelTest
 
 				if ( Input.Down( InputButton.PrimaryAttack ) )
 				{
-					var shape = new SphereSdf( Vector3.Zero, 8f, 32f );
+					var shape = new SphereSdf( Vector3.Zero, 8f * BrushScale, 32f * BrushScale );
 					voxels.Add( shape, transform, 0 );
 				}
 				else
 				{
-					var shape = new SphereSdf( Vector3.Zero, 8f, 64f );
+					var shape = new SphereSdf( Vector3.Zero, 8f * BrushScale, 32f * BrushScale );
 					voxels.Subtract( shape, transform, 0 );
 				}
 			}
