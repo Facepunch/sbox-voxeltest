@@ -4,7 +4,9 @@ using Voxels;
 namespace VoxelTest
 {
 	partial class Player : Sandbox.Player
-	{
+    {
+        private TimeSince _lastJump;
+
 		public override void Respawn()
 		{
 			SetModel( "models/citizen/citizen.vmdl" );
@@ -38,6 +40,23 @@ namespace VoxelTest
 		public override void Simulate( Client cl )
 		{
 			base.Simulate( cl );
+
+            if ( Input.Pressed( InputButton.Jump ) )
+            {
+                if ( _lastJump < 0.25f )
+                {
+                    if ( Controller is NoclipController )
+					{
+						Controller = new WalkController();
+					}
+                    else
+					{
+						Controller = new NoclipController();
+					}
+                }
+
+                _lastJump = 0f;
+            }
 
 			if ( !IsServer )
 				return;
