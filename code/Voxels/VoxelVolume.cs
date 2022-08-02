@@ -32,7 +32,7 @@ namespace Voxels
 
             _chunkScale = 1f / ChunkSize;
 			_chunkCount = Vector3i.Ceiling( LocalSize * _chunkScale );
-			_chunkOffset = LocalSize * -0.5f;
+            _chunkOffset = LocalSize * -0.5f;
 
 			_margin = normalStyle == NormalStyle.Flat ? 1 : 2;
 		}
@@ -82,7 +82,7 @@ namespace Voxels
 			chunk.Name = $"Chunk {index3.x} {index3.y} {index3.z}";
 
 			chunk.SetParent( this );
-			chunk.LocalPosition = _chunkOffset + (Vector3)index3 * ChunkSize;
+			chunk.LocalPosition = _chunkOffset + (Vector3)index3 * ChunkSize - ChunkSize / (1 << ChunkSubdivisions);
 
 			return chunk;
 		}
