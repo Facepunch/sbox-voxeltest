@@ -53,6 +53,8 @@ namespace Voxels
 
 		private Vector3[] _chunkNormals;
 
+        private readonly Voxel[] _cubeVoxels = new Voxel[8];
+        private readonly Vector3[] _cubeColors = new Vector3[8];
         private readonly Vector3[] _cubeNormals = new Vector3[8];
         private readonly DualEdge[] _cubeDualEdges = new DualEdge[12];
 
@@ -116,10 +118,18 @@ namespace Voxels
 					var i2 = xIndexOffset + (y + 0) * yStride + (z + 1) * zStride;
 					var i3 = xIndexOffset + (y + 1) * yStride + (z + 1) * zStride;
 
-					var x0y0z0 = data[i0];
-					var x0y1z0 = data[i1];
-					var x0y0z1 = data[i2];
-					var x0y1z1 = data[i3];
+                    _cubeVoxels[0] = data[i0];
+                    _cubeVoxels[2] = data[i1];
+                    _cubeVoxels[4] = data[i2];
+                    _cubeVoxels[6] = data[i3];
+
+                    if ( render )
+                    {
+                        _cubeColors[0] = _cubeVoxels[0].Color;
+                        _cubeColors[2] = _cubeVoxels[2].Color;
+                        _cubeColors[4] = _cubeVoxels[4].Color;
+                        _cubeColors[6] = _cubeVoxels[6].Color;
+                    }
 
 					if ( updateNormals )
 					{
@@ -130,10 +140,10 @@ namespace Voxels
 					}
 
 					var x0hash
-						= ((x0y0z0.RawValue & 0x80) >> 7)
-						| ((x0y1z0.RawValue & 0x80) >> 6)
-						| ((x0y0z1.RawValue & 0x80) >> 5)
-						| ((x0y1z1.RawValue & 0x80) >> 4);
+						= ((_cubeVoxels[0].RawValue & 0x80) >> 7)
+						| ((_cubeVoxels[2].RawValue & 0x80) >> 6)
+						| ((_cubeVoxels[4].RawValue & 0x80) >> 5)
+						| ((_cubeVoxels[6].RawValue & 0x80) >> 4);
 
 					for ( var x = min.x; x < max.x; ++x )
 					{
@@ -142,10 +152,18 @@ namespace Voxels
 						i2 += xStride;
 						i3 += xStride;
 
-						var x1y0z0 = data[i0];
-						var x1y1z0 = data[i1];
-						var x1y0z1 = data[i2];
-						var x1y1z1 = data[i3];
+						_cubeVoxels[1] = data[i0];
+						_cubeVoxels[3] = data[i1];
+						_cubeVoxels[5] = data[i2];
+						_cubeVoxels[7] = data[i3];
+
+                        if (render)
+                        {
+                            _cubeColors[1] = _cubeVoxels[1].Color;
+                            _cubeColors[3] = _cubeVoxels[3].Color;
+                            _cubeColors[5] = _cubeVoxels[5].Color;
+                            _cubeColors[7] = _cubeVoxels[7].Color;
+                        }
 
 						if ( updateNormals )
 						{
@@ -156,27 +174,33 @@ namespace Voxels
 						}
 
 						var x1hash
-							= ((x1y0z0.RawValue & 0x80) >> 7)
-							| ((x1y1z0.RawValue & 0x80) >> 6)
-							| ((x1y0z1.RawValue & 0x80) >> 5)
-							| ((x1y1z1.RawValue & 0x80) >> 4);
+							= ((_cubeVoxels[1].RawValue & 0x80) >> 7)
+							| ((_cubeVoxels[3].RawValue & 0x80) >> 6)
+							| ((_cubeVoxels[5].RawValue & 0x80) >> 5)
+							| ((_cubeVoxels[7].RawValue & 0x80) >> 4);
 
 						var hash = (x1hash << 4) | x0hash;
 
 						if ( hash != 0b0000_0000 && hash != 0b1111_1111 )
 						{
 							WriteCube( new Vector3i( x, y, z ), scale,
-								x0y0z0, x1y0z0, x0y1z0, x1y1z0,
-								x0y0z1, x1y0z1, x0y1z1, x1y1z1,
 								normalStyle, render, collision );
 						}
 
-						x0y0z0 = x1y0z0;
-						x0y1z0 = x1y1z0;
-						x0y0z1 = x1y0z1;
-						x0y1z1 = x1y1z1;
+						_cubeVoxels[0] = _cubeVoxels[1];
+						_cubeVoxels[2] = _cubeVoxels[3];
+						_cubeVoxels[4] = _cubeVoxels[5];
+						_cubeVoxels[6] = _cubeVoxels[7];
 
 						x0hash = x1hash;
+
+                        if ( render )
+                        {
+                            _cubeColors[0] = _cubeColors[1];
+                            _cubeColors[2] = _cubeColors[3];
+                            _cubeColors[4] = _cubeColors[5];
+                            _cubeColors[6] = _cubeColors[7];
+                        }
 
 						if ( updateNormals )
 						{
@@ -332,12 +356,12 @@ namespace Voxels
 		private static readonly Vector3 X0Y1Z1 = new Vector3( 0f, 1f, 1f );
 		private static readonly Vector3 X1Y1Z1 = new Vector3( 1f, 1f, 1f );
 
-		private Vector3 InterpolateNormal( Vector3 pos )
-		{
-			var x00 = Vector3.Lerp(_cubeNormals[0], _cubeNormals[1], pos.x );
-			var x10 = Vector3.Lerp(_cubeNormals[2], _cubeNormals[3], pos.x );
-			var x01 = Vector3.Lerp(_cubeNormals[4], _cubeNormals[5], pos.x );
-			var x11 = Vector3.Lerp(_cubeNormals[6], _cubeNormals[7], pos.x );
+		private Vector3 Interpolate( Vector3 pos, Vector3[] cubeArray )
+        {
+            var x00 = Vector3.Lerp( cubeArray[0], cubeArray[1], pos.x );
+            var x10 = Vector3.Lerp( cubeArray[2], cubeArray[3], pos.x );
+            var x01 = Vector3.Lerp( cubeArray[4], cubeArray[5], pos.x );
+            var x11 = Vector3.Lerp( cubeArray[6], cubeArray[7], pos.x );
 
 			var xy0 = Vector3.Lerp( x00, x10, pos.y );
 			var xy1 = Vector3.Lerp( x01, x11, pos.y );
@@ -345,28 +369,29 @@ namespace Voxels
 			return Vector3.Lerp( xy0, xy1, pos.z ).Normal;
 		}
 
+        private Vector3 InterpolateNormal( Vector3 pos )
+        {
+            return Interpolate( pos, _cubeNormals ).Normal;
+		}
+
 		private void WriteCube( Vector3i index3, Vector3 scale,
-			Voxel x0y0z0, Voxel x1y0z0,
-			Voxel x0y1z0, Voxel x1y1z0,
-			Voxel x0y0z1, Voxel x1y0z1,
-			Voxel x0y1z1, Voxel x1y1z1,
 			NormalStyle normalStyle,
 			bool render, bool collision)
 		{
 			// Find out if / where the surface intersects each edge of the cube.
 
-			var edgeXMinYMin = GetIntersection(  0, X0Y0Z0, X0Y0Z1, x0y0z0, x0y0z1 );
-			var edgeXMinZMin = GetIntersection(  1, X0Y0Z0, X0Y1Z0, x0y0z0, x0y1z0 );
-			var edgeXMaxYMin = GetIntersection(  2, X1Y0Z0, X1Y0Z1, x1y0z0, x1y0z1 );
-			var edgeXMaxZMin = GetIntersection(  3, X1Y0Z0, X1Y1Z0, x1y0z0, x1y1z0 );
-			var edgeXMinYMax = GetIntersection(  4, X0Y1Z0, X0Y1Z1, x0y1z0, x0y1z1 );
-			var edgeXMinZMax = GetIntersection(  5, X0Y0Z1, X0Y1Z1, x0y0z1, x0y1z1 );
-			var edgeXMaxYMax = GetIntersection(  6, X1Y1Z0, X1Y1Z1, x1y1z0, x1y1z1 );
-			var edgeXMaxZMax = GetIntersection(  7, X1Y0Z1, X1Y1Z1, x1y0z1, x1y1z1 );
-			var edgeYMinZMin = GetIntersection(  8, X0Y0Z0, X1Y0Z0, x0y0z0, x1y0z0 );
-			var edgeYMaxZMin = GetIntersection(  9, X0Y1Z0, X1Y1Z0, x0y1z0, x1y1z0 );
-			var edgeYMinZMax = GetIntersection( 10, X0Y0Z1, X1Y0Z1, x0y0z1, x1y0z1 );
-			var edgeYMaxZMax = GetIntersection( 11, X0Y1Z1, X1Y1Z1, x0y1z1, x1y1z1 );
+			var edgeXMinYMin = GetIntersection(  0, X0Y0Z0, X0Y0Z1, _cubeVoxels[0], _cubeVoxels[4] );
+			var edgeXMinZMin = GetIntersection(  1, X0Y0Z0, X0Y1Z0, _cubeVoxels[0], _cubeVoxels[2] );
+			var edgeXMaxYMin = GetIntersection(  2, X1Y0Z0, X1Y0Z1, _cubeVoxels[1], _cubeVoxels[5] );
+			var edgeXMaxZMin = GetIntersection(  3, X1Y0Z0, X1Y1Z0, _cubeVoxels[1], _cubeVoxels[3] );
+			var edgeXMinYMax = GetIntersection(  4, X0Y1Z0, X0Y1Z1, _cubeVoxels[2], _cubeVoxels[6] );
+			var edgeXMinZMax = GetIntersection(  5, X0Y0Z1, X0Y1Z1, _cubeVoxels[4], _cubeVoxels[6] );
+			var edgeXMaxYMax = GetIntersection(  6, X1Y1Z0, X1Y1Z1, _cubeVoxels[3], _cubeVoxels[7] );
+			var edgeXMaxZMax = GetIntersection(  7, X1Y0Z1, X1Y1Z1, _cubeVoxels[5], _cubeVoxels[7] );
+			var edgeYMinZMin = GetIntersection(  8, X0Y0Z0, X1Y0Z0, _cubeVoxels[0], _cubeVoxels[1] );
+			var edgeYMaxZMin = GetIntersection(  9, X0Y1Z0, X1Y1Z0, _cubeVoxels[2], _cubeVoxels[3] );
+			var edgeYMinZMax = GetIntersection( 10, X0Y0Z1, X1Y0Z1, _cubeVoxels[4], _cubeVoxels[5] );
+			var edgeYMaxZMax = GetIntersection( 11, X0Y1Z1, X1Y1Z1, _cubeVoxels[6], _cubeVoxels[7] );
 
 			// Each face of the cube will have either 0, 2 or 4 edges with intersections.
 			// We will turn each pair of edge intersections into an edge in the final mesh.
@@ -414,8 +439,11 @@ namespace Voxels
                 _cubeDualEdges[i] = default;
 				--dualEdgeCount;
 
-				var a = offset + first.Pos0 * scale;
-				var b = offset + first.Pos1 * scale;
+                var a0 = first.Pos0;
+				var b0 = first.Pos1;
+
+				var a = offset + a0 * scale;
+				var b = offset + b0 * scale;
 
 				var aIndex = CollisionVertices.Count;
 				var bIndex = CollisionVertices.Count + 1;
@@ -426,13 +454,19 @@ namespace Voxels
 					CollisionVertices.Add( b );
 				}
 
-				Vector3 aNorm = default, bNorm = default;
+				Vector3 aNorm = default, bNorm = default, aColor = default, bColor = default;
 
-				if ( render && normalStyle != NormalStyle.Flat )
-				{
-					aNorm = InterpolateNormal( first.Pos0 );
-					bNorm = InterpolateNormal( first.Pos1 );
-				}
+                if ( render )
+                {
+                    if ( normalStyle != NormalStyle.Flat )
+                    {
+                        aNorm = InterpolateNormal( a0 );
+                        bNorm = InterpolateNormal( b0 );
+                    }
+
+                    aColor = Interpolate( a0, _cubeColors );
+                    bColor = Interpolate( b0, _cubeColors );
+                }
 
 				// We skip the first edge, and break on the last edge, so
 				// we output a triangle every N-2 edges in the loop.
@@ -445,11 +479,14 @@ namespace Voxels
 
 					if ( next.Index1 == i ) break;
 
-					var c = offset + next.Pos1 * scale;
+                    var c0 = next.Pos1;
+					var c = offset + c0 * scale;
 
-					if ( render )
-					{
-						switch ( normalStyle )
+                    if ( render )
+                    {
+                        var cColor = Interpolate( c0, _cubeColors );
+
+                        switch ( normalStyle )
 						{
 							case NormalStyle.Flat:
 								{
@@ -457,29 +494,31 @@ namespace Voxels
 									var normal = cross.Normal;
 									var tangent = (b - a).Normal;
 
-									Vertices.Add( new VoxelVertex( a, normal, tangent ) );
-									Vertices.Add( new VoxelVertex( b, normal, tangent ) );
-									Vertices.Add( new VoxelVertex( c, normal, tangent ) );
+									Vertices.Add( new VoxelVertex( a, normal, tangent, aColor ) );
+									Vertices.Add( new VoxelVertex( b, normal, tangent, bColor ) );
+									Vertices.Add( new VoxelVertex( c, normal, tangent, cColor ) );
 
 									break;
 								}
 
 							case NormalStyle.Smooth:
 								{
-									var cNorm = InterpolateNormal( next.Pos1 );
+									var cNorm = InterpolateNormal( c0 );
 
 									var tangent = (b - a).Normal;
 
-									Vertices.Add( new VoxelVertex( a, aNorm, tangent ) );
-									Vertices.Add( new VoxelVertex( b, bNorm, tangent ) );
-									Vertices.Add( new VoxelVertex( c, cNorm, tangent ) );
+									Vertices.Add( new VoxelVertex( a, aNorm, tangent, aColor ) );
+									Vertices.Add( new VoxelVertex( b, bNorm, tangent, bColor ) );
+									Vertices.Add( new VoxelVertex( c, cNorm, tangent, cColor ) );
 
 									bNorm = cNorm;
 
 									break;
 								}
 						}
-					}
+
+                        bColor = cColor;
+                    }
 
 					if ( collision )
 					{

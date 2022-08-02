@@ -127,9 +127,10 @@ namespace Voxels
 
 					if ( writer.CollisionVertices.Count == 0 )
 					{
-                        if ( _shape.IsValid() )
+                        if ( _shape.IsValid() && _body.IsValid() )
                         {
-							_shape.Remove();
+							_body.ClearShapes();
+
                             _shape = null;
 						}
                     }

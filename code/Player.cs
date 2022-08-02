@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Sandbox;
 using Voxels;
 
@@ -14,10 +15,16 @@ namespace VoxelTest
         private const float MinBrushScale = 0.5f;
 		private const float MaxBrushScale = 4f;
 
+        public static Color[] BrushColors { get; } = new[] { Color.White }
+            .Concat( Enumerable.Range( 0, 8 )
+                .Select( x => new ColorHsv( x * 360f / 8f, 0.75f, 1f ).ToColor() ) )
+            .Concat( new[] { Color.Black } ).ToArray();
+
 		[Net]
 		public Cursor Cursor { get; set; }
 
         [Net] public float BrushScale { get; set; } = 1f;
+		[Net] public int MaterialIndex { get; set; }
 
 		public override void Respawn()
 		{
@@ -51,6 +58,20 @@ namespace VoxelTest
 		public TimeSince LastEdit { get; private set; }
         public TimeSince LastJump { get; private set; }
 
+        private readonly InputButton[] _slots = new InputButton[]
+        {
+            InputButton.Slot1,
+            InputButton.Slot2,
+            InputButton.Slot3,
+            InputButton.Slot4,
+            InputButton.Slot5,
+            InputButton.Slot6,
+            InputButton.Slot7,
+            InputButton.Slot8,
+            InputButton.Slot9,
+            InputButton.Slot0
+        };
+
 		public override void Simulate( Client cl )
 		{
 			base.Simulate( cl );
@@ -72,6 +93,14 @@ namespace VoxelTest
                 LastJump = 0f;
 			}
 
+            foreach ( var slot in _slots )
+            {
+                if ( Input.Pressed( slot ) )
+                {
+                    MaterialIndex = Array.IndexOf( _slots, slot );
+				}
+            }
+
             if ( Input.MouseWheel != 0 )
             {
                 BrushScale *= MathF.Pow( 2f, (float) Input.MouseWheel / BrushScaleSteps );
@@ -84,7 +113,7 @@ namespace VoxelTest
             Cursor.Position = pos;
             Cursor.Scale = 2f * BrushScale;
 
-			if ( !IsServer )
+            if ( !IsServer )
 				return;
 
 			if ( LastEdit > 1f / 60f && (Input.Down( InputButton.PrimaryAttack ) || Input.Down( InputButton.SecondaryAttack )) )
@@ -94,13 +123,13 @@ namespace VoxelTest
 
 				if ( Input.Down( InputButton.PrimaryAttack ) )
 				{
-					var shape = new SphereSdf( Vector3.Zero, 8f * BrushScale, 32f * BrushScale );
-					voxels.Add( shape, transform, 0 );
+					var shape = new SphereSdf( Vector3.Zero, 4f * BrushScale, 32f * BrushScale );
+					voxels.Add( shape, transform, BrushColors[MaterialIndex] );
 				}
 				else
 				{
-					var shape = new SphereSdf( Vector3.Zero, 8f * BrushScale, 32f * BrushScale );
-					voxels.Subtract( shape, transform, 0 );
+					var shape = new SphereSdf( Vector3.Zero, 4f * BrushScale, 32f * BrushScale );
+					voxels.Subtract( shape, transform, BrushColors[MaterialIndex]);
 				}
 			}
 

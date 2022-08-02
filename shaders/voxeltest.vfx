@@ -26,6 +26,8 @@ COMMON
 struct VertexInput
 {
 	#include "common/vertexinput.hlsl"
+
+	float4 vColor : COLOR0 < Semantic( Color ); >;
 };
 
 //=========================================================================================================================
@@ -46,6 +48,9 @@ VS
 	PixelInput MainVs( VertexInput i )
 	{
 		PixelInput o = ProcessVertex( i );
+
+		o.vVertexColor.rgb = SrgbGammaToLinear( i.vColor.rgb );
+		o.vVertexColor.a =  i.vColor.a;
 
 		return FinalizeVertex( o );
 	}
@@ -88,10 +93,12 @@ PS
 
         triblend /= max(dot(triblend, half3(1,1,1)), 0.0001);
 
-		float4 colX = Tex2DS( g_tColor, TextureFiltering, uvX );
+		float4 colX = Tex2DS( g_tColor, TextureFiltering, uvX ) * i.vVertexColor;
         float4 colY = Tex2DS( g_tColor, TextureFiltering, uvY );
         float4 colZ = i.vNormalWs.z > 0.0 ? Tex2DS( g_tTopColor, TextureFiltering, uvZ ) : Tex2DS( g_tColor, TextureFiltering, uvZ );
         float4 col = colX * triblend.x + colY * triblend.y + colZ * triblend.z;
+
+		col.rgb *= i.vVertexColor.rgb;
 
 		float4 normX = Tex2DS( g_tNormal, TextureFiltering, uvX );
         float4 normY = Tex2DS( g_tNormal, TextureFiltering, uvY );

@@ -9,9 +9,9 @@ namespace Voxels
 		bool Clear();
 		void UpdateMesh( IVoxelMeshWriter writer, int lod, bool render, bool collision );
 
-		bool Add<T>( T sdf, BBox bounds, Matrix transform, byte materialIndex )
+		bool Add<T>( T sdf, BBox bounds, Matrix transform, Color color )
 			where T : ISignedDistanceField;
-		bool Subtract<T>( T sdf, BBox bounds, Matrix transform, byte materialIndex )
+		bool Subtract<T>( T sdf, BBox bounds, Matrix transform, Color color )
 			where T : ISignedDistanceField;
 	}
 
@@ -94,7 +94,7 @@ namespace Voxels
 			return outerMin.x < outerMax.x && outerMin.y < outerMax.y && outerMin.z < outerMax.z;
 		}
 
-		public bool Add<T>( T sdf, BBox bounds, Matrix transform, byte materialIndex )
+		public bool Add<T>( T sdf, BBox bounds, Matrix transform, Color color )
 			where T : ISignedDistanceField
 		{
 			if ( !PrepareVoxelsForEditing( bounds, out var outerMin, out var outerMax ) )
@@ -103,11 +103,14 @@ namespace Voxels
 			}
 
 			var changed = false;
+            var r = (byte) MathF.Round( color.r * byte.MaxValue );
+            var g = (byte)MathF.Round( color.g * byte.MaxValue );
+            var b = (byte)MathF.Round( color.b * byte.MaxValue );
 
 			foreach ( var (index3, index) in _size.EnumerateArray3D( outerMin, outerMax ) )
 			{
 				var pos = transform.Transform( (index3 - _margin) * _scale );
-				var next = new Voxel( sdf[pos], materialIndex );
+				var next = new Voxel( sdf[pos], r, g, b );
 				var prev = _voxels[index];
 
 				_voxels[index] = prev + next;
@@ -120,7 +123,7 @@ namespace Voxels
 			return changed;
 		}
 
-		public bool Subtract<T>( T sdf, BBox bounds, Matrix transform, byte materialIndex )
+		public bool Subtract<T>( T sdf, BBox bounds, Matrix transform, Color color )
 			where T : ISignedDistanceField
 		{
 			if ( !PrepareVoxelsForEditing( bounds, out var outerMin, out var outerMax ) )
@@ -129,11 +132,14 @@ namespace Voxels
 			}
 
 			var changed = false;
+            var r = (byte)MathF.Round( color.r * byte.MaxValue );
+            var g = (byte)MathF.Round( color.g * byte.MaxValue );
+            var b = (byte)MathF.Round( color.b * byte.MaxValue );
 
 			foreach ( var (index3, index) in _size.EnumerateArray3D( outerMin, outerMax ) )
 			{
 				var pos = transform.Transform( (index3 - _margin) * _scale );
-				var next = new Voxel( sdf[pos], materialIndex );
+				var next = new Voxel( sdf[pos], r, g, b );
 				var prev = _voxels[index];
 
 				_voxels[index] = prev - next;
@@ -145,6 +151,11 @@ namespace Voxels
 
 			return changed;
 		}
+
+        public float GetValue( Vector3 pos )
+        {
+			throw new NotImplementedException();
+        }
 
 		public void Read( ref NetRead read )
 		{

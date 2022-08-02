@@ -1,4 +1,5 @@
-﻿using Sandbox;
+﻿using System;
+using Sandbox;
 using System.Collections.Generic;
 
 namespace Voxels
@@ -8,7 +9,7 @@ namespace Voxels
 		public Vector3 LocalSize { get; private set; }
 		public float ChunkSize { get; private set; }
 		public int ChunkSubdivisions { get; private set; }
-		public NormalStyle NormalStyle { get; private set;}
+		public NormalStyle NormalStyle { get; private set; }
 
 		private float _chunkScale;
 		private Vector3i _chunkCount;
@@ -35,7 +36,7 @@ namespace Voxels
             _chunkOffset = LocalSize * -0.5f;
 
 			_margin = normalStyle == NormalStyle.Flat ? 1 : 2;
-		}
+        }
 
 		protected override void OnDestroy()
 		{
@@ -52,15 +53,19 @@ namespace Voxels
 			_chunks.Clear();
 		}
 
+        public Matrix WorldToLocal => Matrix.CreateScale( 1f / Scale )
+            * Matrix.CreateRotation( Rotation.Inverse )
+            * Matrix.CreateTranslation( -Position );
+
 		private void GetChunkBounds( Matrix transform, BBox bounds,
 			out Matrix invChunkTransform, out BBox chunkBounds,
 			out Vector3i minChunkIndex, out Vector3i maxChunkIndex )
 		{
-			var worldToLocal = Matrix.CreateScale( 1f / Scale )
-				* Matrix.CreateRotation( Rotation.Inverse )
-				* Matrix.CreateTranslation( -Position );
+			var worldToLocal = Matrix.CreateScale(1f / Scale)
+                               * Matrix.CreateRotation(Rotation.Inverse)
+                               * Matrix.CreateTranslation(-Position);
 
-			var localTransform = transform * worldToLocal;
+            var localTransform = transform * worldToLocal;
 
 			invChunkTransform = Matrix.CreateScale( ChunkSize )
 				* Matrix.CreateTranslation( _chunkOffset )
@@ -87,7 +92,20 @@ namespace Voxels
 			return chunk;
 		}
 
-		public void Add<T>( T sdf, Matrix transform, byte materialIndex )
+        public float GetValue( Vector3 pos )
+        {
+            var localPos = WorldToLocal.Transform( pos );
+            var chunkIndex = Vector3i.Floor( (localPos + -_chunkOffset) * _chunkScale );
+
+            if ( !_chunks.TryGetValue( chunkIndex, out var chunk ) )
+            {
+                return -1f;
+            }
+
+            return chunk.Data.GetValue( localPos - (Vector3) chunkIndex * ChunkSize );
+        }
+
+		public void Add<T>( T sdf, Matrix transform, Color color )
 			where T : ISignedDistanceField
 		{
 			GetChunkBounds( transform, sdf.Bounds,
@@ -100,14 +118,14 @@ namespace Voxels
 
 				if ( chunk.Data.Add( sdf, chunkBounds + -chunkIndex3,
 					Matrix.CreateTranslation( chunkIndex3 ) * invChunkTransform,
-					materialIndex ) )
+					color ) )
 				{
 					chunk.InvalidateMesh();
 				}
 			}
 		}
 
-		public void Subtract<T>( T sdf, Matrix transform, byte materialIndex )
+		public void Subtract<T>( T sdf, Matrix transform, Color color )
 			where T : ISignedDistanceField
 		{
 			GetChunkBounds( transform, sdf.Bounds,
@@ -120,7 +138,7 @@ namespace Voxels
 
 				if ( chunk.Data.Subtract( sdf, chunkBounds + -chunkIndex3,
 					Matrix.CreateTranslation( chunkIndex3 ) * invChunkTransform,
-					materialIndex ) )
+					color ) )
 				{
 					chunk.InvalidateMesh();
 				}

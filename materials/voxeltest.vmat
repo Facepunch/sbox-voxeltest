@@ -5,11 +5,7 @@ Layer0
 	shader "voxeltest.vfx"
 
 	//---- Color ----
-	g_flModelTintAmount "1.000"
 	g_vColorTint "[1.000000 1.000000 1.000000 1.000000]"
-
-	//---- Fade ----
-	g_flFadeExponent "1.000"
 
 	//---- Lighting ----
 	g_flDirectionalLightmapMinZ "0.050"
@@ -34,9 +30,9 @@ Layer0
 
 	//---- Top Material ----
 	TopAmbientOcclusion "materials/default/default_ao.tga"
-	TopColor "textures/grass_eclipse_1a_color.png"
-	TopMask "textures/grass_eclipse_1a_mask.png"
+	TopColor "textures/stone_1a_color.png"
+	TopMask "[0.500000 0.500000 0.500000 0.000000]"
 	TopMetalness "[0.016000 0.016000 0.016000 0.000000]"
-	TopNormal "textures/grass_eclipse_1a_normal.png"
-	TopRoughness "textures/grass_eclipse_1a_rough.png"
+	TopNormal "textures/stone_1a_normal.png"
+	TopRoughness "textures/stone_1a_rough.png"
 }
