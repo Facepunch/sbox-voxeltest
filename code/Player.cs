@@ -121,7 +121,14 @@ namespace VoxelTest
 
             if ( Input.MouseWheel != 0 )
             {
-                BrushScale *= MathF.Pow( 2f, (float) Input.MouseWheel / BrushScaleSteps );
+                if ( Input.Down( InputButton.Run ) )
+                {
+                    MaterialIndex = (MaterialIndex + Math.Sign( Input.MouseWheel ) + BrushColors.Length) % BrushColors.Length;
+                }
+                else
+                {
+                    BrushScale *= MathF.Pow(2f, (float)Input.MouseWheel / BrushScaleSteps);
+                }
             }
 
             BrushScale = Math.Clamp( BrushScale, MinBrushScale, MaxBrushScale );
