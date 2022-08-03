@@ -1,12 +1,23 @@
 using Sandbox;
 using System.Diagnostics;
 using Voxels;
+using VoxelTest.UI;
 
 namespace VoxelTest
 {
 	public partial class Game : Sandbox.Game
 	{
-		public static new Game Current => Sandbox.Game.Current as Game;
+		public new static Game Current => Sandbox.Game.Current as Game;
+
+		public Hud Hud { get; }
+
+        public Game()
+        {
+            if ( IsClient )
+            {
+                Hud = new Hud();
+            }
+        }
 
 		public override void ClientJoined( Client client )
 		{

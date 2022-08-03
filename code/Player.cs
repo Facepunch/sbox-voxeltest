@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using Sandbox;
 using Voxels;
+using VoxelTest.UI;
 
 namespace VoxelTest
 {
@@ -23,8 +24,24 @@ namespace VoxelTest
 		[Net]
 		public Cursor Cursor { get; set; }
 
+        private int _materialIndex;
+
         [Net] public float BrushScale { get; set; } = 1f;
-		[Net] public int MaterialIndex { get; set; }
+
+        [Net]
+        public int MaterialIndex
+        {
+            get => _materialIndex;
+            set
+            {
+                _materialIndex = value;
+
+                if ( IsClient )
+                {
+                    ColorBlob.ActiveSlotIndex = value;
+                }
+            }
+        }
 
         private Vector3 _lastPaintPosition;
 

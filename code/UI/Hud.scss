@@ -1,0 +1,69 @@
+Hud {
+    display: flex;
+
+    justify-content: center;
+    align-items: flex-end;
+}
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    height: 15vh;
+    margin-bottom: 5vh;
+}
+
+ColorBlob {
+    position: relative;
+    width: 10vh;
+    height: 10vh;
+    background-image: url(textures/ui-blob-04.png);
+    background-size: cover;
+    transition: width 0.125s ease-out, height 0.125s ease-out;
+}
+
+ColorBlob.selected {
+    width: 15vh;
+    height: 15vh;
+}
+
+ColorBlob > div {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    mix-blend-mode: lighten;
+}
+
+ColorBlob > .red {
+    background-image: url(textures/ui-blob-01.png);
+}
+
+ColorBlob > .green {
+    background-image: url(textures/ui-blob-02.png);
+}
+
+ColorBlob > .blue {
+    background-image: url(textures/ui-blob-03.png);
+}
+
+ColorBlob > .specular {
+    background-image: url(textures/ui-blob-05.png);
+    opacity: 0.5;
+}
+
+ColorBlob > text {
+    color: white;
+    font-size: 4vh;
+    width: 100%;
+    margin-top: 2.5vh;
+    text-align: center;
+    text-stroke: 0.5vh #000000cc;
+    transition: margin-top 0.125s ease-out, font-size 0.125s ease-out;
+}
+
+ColorBlob.selected > text {
+    margin-top: 3.6vh;
+    font-size: 6vh;
+}
