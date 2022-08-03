@@ -12,7 +12,7 @@ namespace VoxelTest
 
         private const int BrushScaleSteps = 4;
 
-        private const float MinBrushScale = 0.5f;
+        private const float MinBrushScale = 1f;
 		private const float MaxBrushScale = 4f;
 
         public static Color[] BrushColors { get; } = new[] { Color.White }
@@ -25,6 +25,8 @@ namespace VoxelTest
 
         [Net] public float BrushScale { get; set; } = 1f;
 		[Net] public int MaterialIndex { get; set; }
+
+        private Vector3 _lastPaintPosition;
 
 		public override void Respawn()
 		{
@@ -54,8 +56,7 @@ namespace VoxelTest
 			EnableAllCollisions = false;
 			EnableDrawing = false;
 		}
-
-		public TimeSince LastEdit { get; private set; }
+		
         public TimeSince LastJump { get; private set; }
 
         private readonly InputButton[] _slots = new InputButton[]
@@ -116,24 +117,33 @@ namespace VoxelTest
             if ( !IsServer )
 				return;
 
-			if ( LastEdit > 1f / 60f && (Input.Down( InputButton.PrimaryAttack ) || Input.Down( InputButton.SecondaryAttack )) )
-			{
-				var voxels = Game.Current.GetOrCreateVoxelVolume();
-				var transform = Matrix.CreateTranslation( pos );
+			if ( Input.Down( InputButton.PrimaryAttack ) || Input.Down( InputButton.SecondaryAttack ) )
+            {
+                var dist = (pos - _lastPaintPosition).Length;
 
-				if ( Input.Down( InputButton.PrimaryAttack ) )
-				{
-					var shape = new SphereSdf( Vector3.Zero, 4f * BrushScale, 32f * BrushScale );
-					voxels.Add( shape, transform, BrushColors[MaterialIndex] );
-				}
-				else
-				{
-					var shape = new SphereSdf( Vector3.Zero, 4f * BrushScale, 32f * BrushScale );
-					voxels.Subtract( shape, transform, BrushColors[MaterialIndex]);
+                if ( dist >= 8f * BrushScale )
+                {
+                    _lastPaintPosition = pos;
+
+                    var voxels = Game.Current.GetOrCreateVoxelVolume();
+                    var transform = Matrix.CreateTranslation(pos);
+
+                    if (Input.Down(InputButton.PrimaryAttack))
+                    {
+                        var shape = new SphereSdf(Vector3.Zero, 4f * BrushScale, 32f * BrushScale);
+                        voxels.Add(shape, transform, BrushColors[MaterialIndex]);
+                    }
+                    else
+                    {
+                        var shape = new SphereSdf(Vector3.Zero, 4f * BrushScale, 32f * BrushScale);
+                        voxels.Subtract(shape, transform, BrushColors[MaterialIndex]);
+                    }
 				}
 			}
-
-			LastEdit = 0f;
+            else
+            {
+                _lastPaintPosition = new Vector3( 0f, 0f, -float.MaxValue );
+            }
 
 			if ( Input.Pressed( InputButton.Flashlight ) )
 			{
