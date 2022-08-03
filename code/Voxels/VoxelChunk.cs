@@ -127,22 +127,26 @@ namespace Voxels
 
 					if ( writer.CollisionVertices.Count == 0 )
 					{
-                        if ( _shape.IsValid() && _body.IsValid() )
+                        if (_body.IsValid())
                         {
-							_body.ClearShapes();
+                            _body.ClearShapes();
+                        }
 
-                            _shape = null;
-						}
+						PhysicsClear();
+
+                        _body = null;
+                        _shape = null;
                     }
 					else
 					{
                         if ( !_body.IsValid() )
                         {
-                            SetupPhysicsFromAABB(PhysicsMotionType.Static, 0f, Size);
+                            SetupPhysicsFromAABB( PhysicsMotionType.Static, 0f, Size );
 
                             _body = PhysicsBody;
+                            _shape = null;
 
-                            if ( _body.IsValid() )
+							if ( _body.IsValid() )
 							{
 								_body.ClearShapes();
 							}
@@ -155,10 +159,8 @@ namespace Voxels
                                 _shape = _body.AddMeshShape( writer.CollisionVertices, writer.CollisionIndices );
                                 _shape.AddTag( "solid" );
                             }
-                            else
-                            {
-                                _shape.UpdateMesh( writer.CollisionVertices, writer.CollisionIndices );
-                            }
+
+                            _shape.UpdateMesh(writer.CollisionVertices, writer.CollisionIndices);
 						}
 					}
 				}
