@@ -68,7 +68,8 @@ namespace VoxelTest
 			var timer = new Stopwatch();
 			timer.Start();
 
-			var bounds = new BBox( new Vector3( -512f, -512f, 0f ), new Vector3( 512f, 512f, 512f ) ) + caller.Pawn.Position;
+			var bounds = new BBox( new Vector3( -512f, -512f, 0f ), new Vector3( 512f, 512f, 512f ))
+                         + caller.Pawn.Position + caller.Pawn.EyeRotation.Forward.WithZ(0).Normal * 512f;
 			var smoothing = 16f;
 
 			for ( var i = 0; i < count; ++i )
@@ -92,10 +93,11 @@ namespace VoxelTest
 			var timer = new Stopwatch();
 			timer.Start();
 
-			var sizeRange = new BBox( 32, 128f );
+			var sizeRange = new BBox( 64f, 256f );
 
-			var bounds = new BBox( new Vector3( -512f, -512f, 0f ), new Vector3( 512f, 512f, 512f ) ) + caller.Pawn.Position;
-			var smoothing = 16f;
+			var bounds = new BBox( new Vector3( -512f, -512f, 0f ), new Vector3( 512f, 512f, 512f ) )
+                + caller.Pawn.Position + caller.Pawn.EyeRotation.Forward.WithZ( 0 ).Normal * 512f;
+			var smoothing = 64f;
 
 			for ( var i = 0; i < count; ++i )
 			{
@@ -104,7 +106,10 @@ namespace VoxelTest
 				var center = centerRange.RandomPointInside;
                 var color = Color.Random;
 
-				voxels.Add( new BBoxSdf( center - size * 0.5f, center + size * 0.5f, smoothing ), Matrix.Identity, color );
+                var rotation = Rotation.Random;
+
+				voxels.Add( new BBoxSdf( - size * 0.5f, size * 0.5f, smoothing ),
+                     Matrix.CreateRotation( rotation ) * Matrix.CreateTranslation( center ), color );
 			}
 
 			Log.Info( $"Spawned {count} boxes in {timer.Elapsed.TotalMilliseconds:F2}ms" );
