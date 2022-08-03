@@ -8,22 +8,24 @@ Hud {
 .toolbar {
     display: flex;
     align-items: center;
-    height: 15vh;
-    margin-bottom: 5vh;
+    height: 10vh;
+    margin-bottom: 2.5vh;
 }
 
 ColorBlob {
+    margin-left: 0.25vh;
+    margin-right: 0.25vh;
     position: relative;
-    width: 10vh;
-    height: 10vh;
+    width: 7vh;
+    height: 7vh;
     background-image: url(textures/ui-blob-04.png);
     background-size: cover;
     transition: width 0.125s ease-out, height 0.125s ease-out;
 }
 
 ColorBlob.selected {
-    width: 15vh;
-    height: 15vh;
+    width: 10vh;
+    height: 10vh;
 }
 
 ColorBlob > div {
@@ -55,15 +57,15 @@ ColorBlob > .specular {
 
 ColorBlob > text {
     color: white;
-    font-size: 4vh;
+    font-size: 3vh;
     width: 100%;
-    margin-top: 2.5vh;
+    margin-top: 1.75vh;
     text-align: center;
-    text-stroke: 0.5vh #000000cc;
+    text-stroke: 0.5vh black;
     transition: margin-top 0.125s ease-out, font-size 0.125s ease-out;
 }
 
 ColorBlob.selected > text {
-    margin-top: 3.6vh;
-    font-size: 6vh;
+    margin-top: 2vh;
+    font-size: 5vh;
 }
