@@ -28,6 +28,8 @@ namespace VoxelTest
 
         [Net] public float BrushScale { get; set; } = 1f;
 
+        [Net] public Plane? SnapPlane { get; set; }
+
         [Net]
         public int MaterialIndex
         {
@@ -57,9 +59,12 @@ namespace VoxelTest
 			EnableDrawing = true;
 			EnableHideInFirstPerson = true;
 			EnableShadowInFirstPerson = true;
-			
-            Cursor ??= new Cursor();
-            Cursor.Owner = this;
+
+            if ( IsServer )
+            {
+                Cursor ??= new Cursor();
+                Cursor.Owner = this;
+            }
 
 			base.Respawn();
 		}
@@ -131,9 +136,24 @@ namespace VoxelTest
                 }
             }
 
-            BrushScale = Math.Clamp( BrushScale, MinBrushScale, MaxBrushScale );
+            var pos = EyePosition + EyeRotation.Forward * (128f + BrushScale * 64f);
 
-			var pos = EyePosition + EyeRotation.Forward * (128f + BrushScale * 64f);
+            if ( Input.Pressed( InputButton.Walk ) )
+            {
+                SnapPlane = new Plane( pos, -EyeRotation.Forward );
+            }
+            
+            if ( Input.Released( InputButton.Walk ) )
+            {
+                SnapPlane = null;
+            }
+
+            if ( SnapPlane.HasValue )
+            {
+                pos = SnapPlane.Value.Trace( new Ray( EyePosition, EyeRotation.Forward ) ) ?? pos;
+            }
+
+            BrushScale = Math.Clamp( BrushScale, MinBrushScale, MaxBrushScale );
 
             Cursor.Position = pos;
             Cursor.Scale = 2f * BrushScale;
