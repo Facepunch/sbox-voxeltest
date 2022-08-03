@@ -30,6 +30,9 @@ namespace Voxels
 		private Vector3 _scale;
 
 		private bool _cleared;
+        private bool _hasInterior;
+        private bool _hasExterior;
+
 		private int _margin;
 
 		public ArrayVoxelData()
@@ -77,6 +80,7 @@ namespace Voxels
 		public void UpdateMesh( IVoxelMeshWriter writer, int lod, bool render, bool collision )
 		{
 			if ( _voxels == null || _cleared || !render && !collision ) return;
+            if ( !_hasInterior || !_hasExterior ) return;
 
 			writer.Write( _voxels, _size, _margin, _size - _margin, lod, render ? NormalStyle : NormalStyle.Flat, render, collision );
 		}
@@ -103,7 +107,7 @@ namespace Voxels
 			}
 
 			var changed = false;
-            var r = (byte) MathF.Round( color.r * byte.MaxValue );
+            var r = (byte)MathF.Round( color.r * byte.MaxValue );
             var g = (byte)MathF.Round( color.g * byte.MaxValue );
             var b = (byte)MathF.Round( color.b * byte.MaxValue );
 
@@ -167,7 +171,14 @@ namespace Voxels
 				Init( subDivs, normalStyle );
 			}
 
-			_voxels = read.ReadUnmanagedArray( _voxels );
+            _hasInterior = read.Read<bool>();
+			_hasExterior = read.Read<bool>();
+
+            if ( _hasInterior && _hasExterior )
+			{
+				_voxels = read.ReadUnmanagedArray(_voxels);
+			}
+
 			_cleared = false;
 
 			++NetReadCount;
@@ -177,8 +188,26 @@ namespace Voxels
 		{
 			write.Write( Subdivisions );
 			write.Write( NormalStyle );
-			write.WriteUnmanagedArray( _voxels );
-		}
+
+            _hasInterior = false;
+            _hasExterior = false;
+
+            for ( var i = 0; i < _voxels.Length; i++ )
+            {
+                var interior = _voxels[i].RawValue >= 128;
+
+                _hasInterior |= interior;
+                _hasExterior |= !interior;
+            }
+
+            write.Write( _hasInterior );
+            write.Write( _hasExterior );
+
+            if ( _hasInterior && _hasExterior )
+            {
+                write.WriteUnmanagedArray( _voxels );
+            }
+        }
 
 		public override string ToString()
 		{
