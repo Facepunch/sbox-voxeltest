@@ -18,7 +18,7 @@ ColorBlob {
     position: relative;
     width: 7vh;
     height: 7vh;
-    background-image: url(textures/ui-blob-04.png);
+    background-image: url(ui/blob-04.png);
     background-size: cover;
     transition: width 0.125s ease-out, height 0.125s ease-out;
 }
@@ -39,19 +39,19 @@ ColorBlob > div {
 }
 
 ColorBlob > .red {
-    background-image: url(textures/ui-blob-01.png);
+    background-image: url(ui/blob-01.png);
 }
 
 ColorBlob > .green {
-    background-image: url(textures/ui-blob-02.png);
+    background-image: url(ui/blob-02.png);
 }
 
 ColorBlob > .blue {
-    background-image: url(textures/ui-blob-03.png);
+    background-image: url(ui/blob-03.png);
 }
 
 ColorBlob > .specular {
-    background-image: url(textures/ui-blob-05.png);
+    background-image: url(ui/blob-05.png);
     opacity: 0.5;
 }
 
