@@ -1,5 +1,6 @@
 ﻿using Sandbox;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Voxels
 {
@@ -11,6 +12,8 @@ namespace Voxels
 		private Mesh _mesh;
         private PhysicsBody _body;
         private PhysicsShape _shape;
+
+        private Task _updateMeshTask;
 
 		private bool _meshInvalid;
 		private int _lastNetReadCount;
@@ -47,7 +50,7 @@ namespace Voxels
 			{
 				_meshInvalid = false;
 
-				UpdateMesh( true, true );
+                _updateMeshTask = UpdateMeshAsync( true, true );
 			}
 		}
 
@@ -58,13 +61,13 @@ namespace Voxels
 			{
 				_meshInvalid = false;
 
-				UpdateMesh( false, true );
+                _updateMeshTask = UpdateMeshAsync( false, true );
 
 				Data.WriteNetworkData();
 			}
 		}
 
-		public void UpdateMesh( bool render, bool collision )
+		public async Task UpdateMeshAsync( bool render, bool collision )
 		{
 			var writer = MarchingCubesMeshWriter.Rent();
 
@@ -73,8 +76,8 @@ namespace Voxels
 			try
 			{
 				if ( render )
-				{
-					Data.UpdateMesh( writer, 0, true, false );
+                {
+                    await Task.RunInThreadAsync( () => Data.UpdateMesh( writer, 0, true, false ) );
 
 					if ( writer.Vertices.Count == 0 )
 					{
@@ -126,7 +129,7 @@ namespace Voxels
 					Data.UpdateMesh( writer, 1, false, true );
 
 					if ( writer.CollisionVertices.Count == 0 )
-					{
+                    {
                         if (_body.IsValid())
                         {
                             _body.ClearShapes();
@@ -136,10 +139,10 @@ namespace Voxels
 
                         _body = null;
                         _shape = null;
-                    }
+					}
 					else
 					{
-                        if ( !_body.IsValid() )
+						if ( !_body.IsValid() )
                         {
                             SetupPhysicsFromAABB( PhysicsMotionType.Static, 0f, Size );
 
