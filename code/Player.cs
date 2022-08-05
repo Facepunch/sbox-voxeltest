@@ -26,11 +26,11 @@ namespace VoxelTest
 
         private int _materialIndex;
 
-        [Net] public float BrushScale { get; set; } = 1f;
+        [Net, Predicted] public float BrushScale { get; set; } = 1f;
 
-        [Net] public Plane? SnapPlane { get; set; }
+        [Net, Predicted] public Plane? SnapPlane { get; set; }
 
-        [Net]
+        [Net, Predicted]
         public int MaterialIndex
         {
             get => _materialIndex;
@@ -136,6 +136,8 @@ namespace VoxelTest
                 }
             }
 
+            BrushScale = Math.Clamp(BrushScale, MinBrushScale, MaxBrushScale);
+
             var pos = EyePosition + EyeRotation.Forward * (128f + BrushScale * 64f);
 
             if ( Input.Pressed( InputButton.Walk ) )
@@ -152,8 +154,6 @@ namespace VoxelTest
             {
                 pos = SnapPlane.Value.Trace( new Ray( EyePosition, EyeRotation.Forward ) ) ?? pos;
             }
-
-            BrushScale = Math.Clamp( BrushScale, MinBrushScale, MaxBrushScale );
 
             Cursor.Position = pos;
             Cursor.Scale = 2f * BrushScale;
