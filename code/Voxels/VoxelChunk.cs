@@ -1,4 +1,5 @@
-﻿using Sandbox;
+﻿using System.Collections.Generic;
+using Sandbox;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -66,6 +67,18 @@ namespace Voxels
 				Data.WriteNetworkData();
 			}
 		}
+
+        public bool Add<T>( T sdf, BBox bounds, Matrix transform, Color color )
+            where T : ISignedDistanceField
+        {
+            return Data.Add( sdf, bounds, transform, color );
+        }
+
+        public bool Subtract<T>( T sdf, BBox bounds, Matrix transform )
+            where T : ISignedDistanceField
+        {
+            return Data.Subtract( sdf, bounds, transform );
+        }
 
 		public async Task UpdateMeshAsync( bool render, bool collision )
 		{

@@ -11,15 +11,15 @@ namespace Voxels
 
 		bool Add<T>( T sdf, BBox bounds, Matrix transform, Color color )
 			where T : ISignedDistanceField;
-		bool Subtract<T>( T sdf, BBox bounds, Matrix transform, Color color )
+		bool Subtract<T>( T sdf, BBox bounds, Matrix transform )
 			where T : ISignedDistanceField;
 	}
 
 	public partial class ArrayVoxelData : BaseNetworkable, IVoxelData, INetworkSerializer
-	{
-		public const int MaxSubdivisions = 5;
+    {
+        public const int MaxSubdivisions = 5;
 
-		public int Subdivisions { get; private set; }
+        public int Subdivisions { get; private set; }
 		public NormalStyle NormalStyle { get; private set; }
 
 		public int NetReadCount { get; private set; }
@@ -87,16 +87,18 @@ namespace Voxels
 
 		private bool PrepareVoxelsForEditing( BBox bounds, out Vector3i outerMin, out Vector3i outerMax )
 		{
-			if ( _voxels == null )
-			{
-				_voxels = new Voxel[_size.x * _size.y * _size.z];
-			}
-
 			outerMin = Vector3i.Max( Vector3i.Floor( bounds.Mins * _renderedSize ) - _margin - 1, 0 );
 			outerMax = Vector3i.Min( Vector3i.Ceiling( bounds.Maxs * _renderedSize ) + 2 + _margin, _size );
 
-			return outerMin.x < outerMax.x && outerMin.y < outerMax.y && outerMin.z < outerMax.z;
-		}
+            if ( outerMin.x >= outerMax.x || outerMin.y >= outerMax.y || outerMin.z >= outerMax.z )
+            {
+                return false;
+            }
+
+            _voxels ??= new Voxel[_size.x * _size.y * _size.z];
+
+            return true;
+        }
 
 		public bool Add<T>( T sdf, BBox bounds, Matrix transform, Color color )
 			where T : ISignedDistanceField
@@ -127,7 +129,7 @@ namespace Voxels
 			return changed;
 		}
 
-		public bool Subtract<T>( T sdf, BBox bounds, Matrix transform, Color color )
+		public bool Subtract<T>( T sdf, BBox bounds, Matrix transform )
 			where T : ISignedDistanceField
 		{
 			if ( !PrepareVoxelsForEditing( bounds, out var outerMin, out var outerMax ) )
@@ -136,14 +138,11 @@ namespace Voxels
 			}
 
 			var changed = false;
-            var r = (byte)MathF.Round( color.r * byte.MaxValue );
-            var g = (byte)MathF.Round( color.g * byte.MaxValue );
-            var b = (byte)MathF.Round( color.b * byte.MaxValue );
 
 			foreach ( var (index3, index) in _size.EnumerateArray3D( outerMin, outerMax ) )
 			{
 				var pos = transform.Transform( (index3 - _margin) * _scale );
-				var next = new Voxel( sdf[pos], r, g, b );
+				var next = new Voxel( sdf[pos], 0, 0, 0 );
 				var prev = _voxels[index];
 
 				_voxels[index] = prev - next;
@@ -186,19 +185,22 @@ namespace Voxels
 
 		public void Write( NetWrite write )
 		{
-			write.Write( Subdivisions );
+            write.Write( Subdivisions );
 			write.Write( NormalStyle );
 
             _hasInterior = false;
             _hasExterior = false;
 
-            for ( var i = 0; i < _voxels.Length; i++ )
-            {
-                var interior = _voxels[i].RawValue >= 128;
+            if ( _voxels != null )
+			{
+				for (var i = 0; i < _voxels.Length; i++)
+                {
+                    var interior = _voxels[i].RawValue >= 128;
 
-                _hasInterior |= interior;
-                _hasExterior |= !interior;
-            }
+                    _hasInterior |= interior;
+                    _hasExterior |= !interior;
+                }
+			}
 
             write.Write( _hasInterior );
             write.Write( _hasExterior );

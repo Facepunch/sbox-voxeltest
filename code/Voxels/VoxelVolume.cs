@@ -116,7 +116,7 @@ namespace Voxels
 			{
 				var chunk = GetOrCreateChunk( chunkIndex3 );
 
-				if ( chunk.Data.Add( sdf, chunkBounds + -chunkIndex3,
+				if ( chunk.Add( sdf, chunkBounds + -chunkIndex3,
 					Matrix.CreateTranslation( chunkIndex3 ) * invChunkTransform,
 					color ) )
 				{
@@ -125,7 +125,7 @@ namespace Voxels
 			}
 		}
 
-		public void Subtract<T>( T sdf, Matrix transform, Color color )
+		public void Subtract<T>( T sdf, Matrix transform )
 			where T : ISignedDistanceField
 		{
 			GetChunkBounds( transform, sdf.Bounds,
@@ -136,9 +136,8 @@ namespace Voxels
 			{
 				if ( !_chunks.TryGetValue( chunkIndex3, out var chunk ) ) continue;
 
-				if ( chunk.Data.Subtract( sdf, chunkBounds + -chunkIndex3,
-					Matrix.CreateTranslation( chunkIndex3 ) * invChunkTransform,
-					color ) )
+				if ( chunk.Subtract( sdf, chunkBounds + -chunkIndex3,
+					Matrix.CreateTranslation( chunkIndex3 ) * invChunkTransform ) )
 				{
 					chunk.InvalidateMesh();
 				}

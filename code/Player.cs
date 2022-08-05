@@ -190,12 +190,12 @@ namespace VoxelTest
                     if (Input.Down(InputButton.PrimaryAttack))
                     {
                         var shape = new SphereSdf( Vector3.Zero, BrushSize, gradientWidth );
-                        voxels.Add(shape, transform, BrushColors[MaterialIndex]);
+                        voxels.Add( shape, transform, BrushColors[MaterialIndex] );
                     }
                     else
                     {
                         var shape = new SphereSdf( Vector3.Zero, BrushSize - gradientWidth, gradientWidth );
-                        voxels.Subtract(shape, transform, BrushColors[MaterialIndex]);
+                        voxels.Subtract( shape, transform );
                     }
 				}
 			}
