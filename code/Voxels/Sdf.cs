@@ -1,18 +1,35 @@
 using System;
+using Sandbox;
 
 namespace Voxels
 {
 	using static Helpers;
+
+    public enum SdfType : byte
+    {
+		Unknown,
+		Sphere,
+		BBox,
+    }
 
 	public interface ISignedDistanceField
 	{
 		BBox Bounds { get; }
 
 		float this[Vector3 pos] { get; }
-	}
+
+        SdfType Type => SdfType.Unknown;
+
+        void Write( NetWrite write )
+        {
+
+        }
+    }
 
 	public readonly struct SphereSdf : ISignedDistanceField
 	{
+        public SdfType Type => SdfType.Sphere;
+
 		public Vector3 Center { get; }
 		public float Radius { get; }
 		public float MaxDistance { get; }
@@ -31,44 +48,74 @@ namespace Voxels
 		public BBox Bounds => new BBox( Center - Radius - MaxDistance, Center + Radius + MaxDistance );
 
 		public float this[Vector3 pos] => (Radius - (Center - pos).Length) * _invMaxDistance;
+
+        public void Write( NetWrite write )
+        {
+			write.Write( Center );
+            write.Write( Radius );
+            write.Write( MaxDistance );
+        }
+
+        public static SphereSdf Read( ref NetRead read )
+        {
+            return new SphereSdf(
+                read.Read<Vector3>(),
+                read.Read<float>(),
+                read.Read<float>() );
+        }
 	}
 
-	public readonly struct BBoxSdf : ISignedDistanceField
-	{
-		public BBox Box { get; }
-		public float MaxDistance { get; }
+    public readonly struct BBoxSdf : ISignedDistanceField
+    {
+        public SdfType Type => SdfType.BBox;
 
-		private readonly float _invMaxDistance;
+        public BBox Box { get; }
+        public float MaxDistance { get; }
 
-		BBox ISignedDistanceField.Bounds => new BBox(Box.Mins - MaxDistance, Box.Maxs + MaxDistance);
+        private readonly float _invMaxDistance;
 
-		public BBoxSdf( BBox box, float maxDistance )
-		{
-			Box = box;
-			MaxDistance = maxDistance;
+        BBox ISignedDistanceField.Bounds => new BBox( Box.Mins - MaxDistance, Box.Maxs + MaxDistance );
 
-			_invMaxDistance = 1f / maxDistance;
-		}
+        public BBoxSdf( BBox box, float maxDistance )
+        {
+            Box = box;
+            MaxDistance = maxDistance;
 
-		public BBoxSdf( Vector3 min, Vector3 max, float maxDistance )
-		{
-			Box = new BBox( min, max );
-			MaxDistance = maxDistance;
+            _invMaxDistance = 1f / maxDistance;
+        }
 
-			_invMaxDistance = 1f / maxDistance;
-		}
+        public BBoxSdf( Vector3 min, Vector3 max, float maxDistance )
+        {
+            Box = new BBox( min, max );
+            MaxDistance = maxDistance;
 
-		public float this[Vector3 pos]
-		{
-			get
-			{
-				var dist3 = Vector3.Min( pos - Box.Mins, Box.Maxs - pos );
-				return Math.Min( dist3.x, Math.Min( dist3.y, dist3.z ) ) * _invMaxDistance;
-			}
-		}
-	}
+            _invMaxDistance = 1f / maxDistance;
+        }
 
-	public readonly struct VoxelArraySdf : ISignedDistanceField
+        public float this[ Vector3 pos ]
+        {
+            get
+            {
+                var dist3 = Vector3.Min( pos - Box.Mins, Box.Maxs - pos );
+                return Math.Min( dist3.x, Math.Min( dist3.y, dist3.z ) ) * _invMaxDistance;
+            }
+        }
+
+        public void Write( NetWrite write )
+        {
+            write.Write( Box );
+            write.Write( MaxDistance );
+        }
+
+        public static BBoxSdf Read( ref NetRead read )
+        {
+            return new BBoxSdf(
+                read.Read<BBox>(),
+                read.Read<float>() );
+        }
+    }
+
+    public readonly struct VoxelArraySdf : ISignedDistanceField
 	{
 		public Voxel[] Array { get; }
 		public Vector3i Size { get; }
