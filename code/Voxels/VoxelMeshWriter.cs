@@ -366,7 +366,7 @@ namespace Voxels
 			var xy0 = Vector3.Lerp( x00, x10, pos.y );
 			var xy1 = Vector3.Lerp( x01, x11, pos.y );
 
-			return Vector3.Lerp( xy0, xy1, pos.z ).Normal;
+			return Vector3.Lerp( xy0, xy1, pos.z );
 		}
 
         private Vector3 InterpolateNormal( Vector3 pos )

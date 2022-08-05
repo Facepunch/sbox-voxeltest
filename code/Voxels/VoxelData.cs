@@ -1,5 +1,6 @@
 using Sandbox;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Voxels
@@ -116,15 +117,18 @@ namespace Voxels
 			foreach ( var (index3, index) in _size.EnumerateArray3D( outerMin, outerMax ) )
 			{
 				var pos = transform.Transform( (index3 - _margin) * _scale );
-				var next = new Voxel( sdf[pos], r, g, b );
 				var prev = _voxels[index];
+                var next = prev + new Voxel(sdf[pos], r, g, b);
 
-				_voxels[index] = prev + next;
+				_voxels[index] = next;
 
-				changed |= prev.RawValue < 255 && next.RawValue > 0;
+				changed |= next != prev;
 			}
 
-			if ( changed ) _cleared = false;
+            if ( changed )
+            {
+                _cleared = false;
+            }
 
 			return changed;
 		}
@@ -142,15 +146,18 @@ namespace Voxels
 			foreach ( var (index3, index) in _size.EnumerateArray3D( outerMin, outerMax ) )
 			{
 				var pos = transform.Transform( (index3 - _margin) * _scale );
-				var next = new Voxel( sdf[pos], 0, 0, 0 );
-				var prev = _voxels[index];
+                var prev = _voxels[index];
+				var next = prev - new Voxel( sdf[pos], 0, 0, 0 );
 
-				_voxels[index] = prev - next;
+				_voxels[index] = next;
 
-				changed |= prev.RawValue > 0 && next.RawValue > 0;
+				changed |= next != prev;
 			}
 
-			if ( changed ) _cleared = false;
+            if ( changed )
+            {
+                _cleared = false;
+            }
 
 			return changed;
 		}

@@ -4,20 +4,30 @@ using System.Runtime.InteropServices;
 
 namespace Voxels
 {
-	public readonly struct Voxel
+	public readonly struct Voxel : IEquatable<Voxel>
     {
         private static readonly float[] _sValueLookup = new float[256];
 
         private const float ColorScale = 1f / 255f;
 
-		public static Voxel operator +( Voxel a, Voxel b )
+        public static bool operator ==( Voxel a, Voxel b )
         {
-            var alpha = ColorScale * b.RawValue;
+            return a.RawValue == b.RawValue && a.R == b.R && a.G == b.G && a.B == b.B;
+        }
+
+        public static bool operator !=( Voxel a, Voxel b )
+        {
+            return a.RawValue != b.RawValue || a.R != b.R || a.G != b.G || a.B != b.B;
+        }
+
+        public static Voxel operator +( Voxel a, Voxel b )
+        {
+            var alpha = Math.Clamp( ColorScale * (b.RawValue + 127 - a.RawValue * 2), 0f, 1f );
 
 			return new Voxel( Math.Max( a.RawValue, b.RawValue ),
-                (byte)MathF.Round( a.R * (1f - alpha) + b.R * alpha ),
-                (byte)MathF.Round( a.G * (1f - alpha) + b.G * alpha ),
-                (byte)MathF.Round( a.B * (1f - alpha) + b.B * alpha ) );
+                (byte)MathF.Round( a.R + (b.R - a.R) * alpha ),
+                (byte)MathF.Round( a.G + (b.G - a.G) * alpha ),
+                (byte)MathF.Round( a.B + (b.B - a.B) * alpha ) );
         }
 
 		public static Voxel operator -( Voxel a, Voxel b )
@@ -64,7 +74,22 @@ namespace Voxels
 		{
 			return $"({Value:F2}, #{R:x2}{G:x2}{B:x2})";
 		}
-	}
+
+        public bool Equals( Voxel other )
+        {
+            return RawValue == other.RawValue && R == other.R && G == other.G && B == other.B;
+        }
+
+        public override bool Equals( object obj )
+        {
+            return obj is Voxel other && Equals( other );
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine( RawValue, R, G, B );
+        }
+    }
 
 	[StructLayout( LayoutKind.Sequential )]
 	public readonly struct VoxelVertex
