@@ -45,7 +45,19 @@ namespace VoxelTest
             }
         }
 
+        public ClothingContainer Clothing { get; } = new();
+
         private Vector3 _lastPaintPosition;
+
+        public Player()
+        {
+
+        }
+
+        public Player( Client cl )
+        {
+            Clothing.LoadFromClient( cl );
+        }
 
 		public override void Respawn()
 		{
@@ -55,7 +67,9 @@ namespace VoxelTest
 			Animator = new StandardPlayerAnimator();
 			CameraMode = new ThirdPersonCamera();
 
-			EnableAllCollisions = true;
+            Clothing.DressEntity( this );
+
+            EnableAllCollisions = true;
 			EnableDrawing = true;
 			EnableHideInFirstPerson = true;
 			EnableShadowInFirstPerson = true;

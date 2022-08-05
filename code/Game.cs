@@ -23,7 +23,7 @@ namespace VoxelTest
 		{
 			base.ClientJoined( client );
 
-			var player = new Player();
+			var player = new Player( client );
 			client.Pawn = player;
 
 			player.Respawn();
