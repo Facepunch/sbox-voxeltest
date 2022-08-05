@@ -13,8 +13,8 @@ namespace VoxelTest
 
         private const int BrushScaleSteps = 4;
 
-        private const float MinBrushScale = 1f;
-		private const float MaxBrushScale = 4f;
+        private const float MinBrushSize = 32f;
+		private const float MaxBrushSize = 128f;
 
         public static Color[] BrushColors { get; } = new[] { Color.White }
             .Concat( Enumerable.Range( 0, 8 )
@@ -26,7 +26,7 @@ namespace VoxelTest
 
         private int _materialIndex;
 
-        [Net, Predicted] public float BrushScale { get; set; } = 1f;
+        [Net, Predicted] public float BrushSize { get; set; } = 32f;
 
         [Net, Predicted] public Plane? SnapPlane { get; set; }
 
@@ -146,13 +146,13 @@ namespace VoxelTest
                 }
                 else
                 {
-                    BrushScale *= MathF.Pow(2f, (float)Input.MouseWheel / BrushScaleSteps);
+                    BrushSize *= MathF.Pow(2f, (float)Input.MouseWheel / BrushScaleSteps);
                 }
             }
 
-            BrushScale = Math.Clamp(BrushScale, MinBrushScale, MaxBrushScale);
+            BrushSize = Math.Clamp(BrushSize, MinBrushSize, MaxBrushSize);
 
-            var pos = EyePosition + EyeRotation.Forward * (128f + BrushScale * 64f);
+            var pos = EyePosition + EyeRotation.Forward * (128f + BrushSize * 2f);
 
             if ( Input.Pressed( InputButton.Walk ) )
             {
@@ -170,7 +170,7 @@ namespace VoxelTest
             }
 
             Cursor.Position = pos;
-            Cursor.Scale = 2f * BrushScale;
+            Cursor.Scale = BrushSize / 16f;
 
             if ( !IsServer )
 				return;
@@ -179,21 +179,22 @@ namespace VoxelTest
             {
                 var dist = (pos - _lastPaintPosition).Length;
 
-                if ( dist >= 8f * BrushScale )
+                if ( dist >= BrushSize / 8f )
                 {
                     _lastPaintPosition = pos;
 
                     var voxels = Game.Current.GetOrCreateVoxelVolume();
                     var transform = Matrix.CreateTranslation(pos);
+                    var gradientWidth = 2f * voxels.ChunkSize / (1 << voxels.ChunkSubdivisions);
 
                     if (Input.Down(InputButton.PrimaryAttack))
                     {
-                        var shape = new SphereSdf(Vector3.Zero, 4f * BrushScale, 32f * BrushScale);
+                        var shape = new SphereSdf( Vector3.Zero, BrushSize, gradientWidth );
                         voxels.Add(shape, transform, BrushColors[MaterialIndex]);
                     }
                     else
                     {
-                        var shape = new SphereSdf(Vector3.Zero, 4f * BrushScale, 32f * BrushScale);
+                        var shape = new SphereSdf( Vector3.Zero, BrushSize - gradientWidth, gradientWidth );
                         voxels.Subtract(shape, transform, BrushColors[MaterialIndex]);
                     }
 				}

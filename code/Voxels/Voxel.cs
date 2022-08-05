@@ -7,21 +7,22 @@ namespace Voxels
 	public readonly struct Voxel
     {
         private static readonly float[] _sValueLookup = new float[256];
-        private static readonly float[] _sAlphaLookup = new float[256];
+
+        private const float ColorScale = 1f / 255f;
 
 		public static Voxel operator +( Voxel a, Voxel b )
         {
-            var alpha = _sAlphaLookup[b.RawValue];
+            var alpha = ColorScale * b.RawValue;
 
-            return new Voxel( (byte)Math.Min( a.RawValue + b.RawValue, 255 ),
-                (byte)MathF.Round( a.R + (b.R - a.R) * alpha ),
-                (byte)MathF.Round( a.G + (b.G - a.G) * alpha ),
-                (byte)MathF.Round( a.B + (b.B - a.B) * alpha ) );
+			return new Voxel( Math.Max( a.RawValue, b.RawValue ),
+                (byte)MathF.Round( a.R * (1f - alpha) + b.R * alpha ),
+                (byte)MathF.Round( a.G * (1f - alpha) + b.G * alpha ),
+                (byte)MathF.Round( a.B * (1f - alpha) + b.B * alpha ) );
         }
 
 		public static Voxel operator -( Voxel a, Voxel b )
 		{
-            return new Voxel( (byte)Math.Max( a.RawValue - b.RawValue, 0 ), a.R, a.G, a.B );
+            return new Voxel( (byte) Math.Max( a.RawValue - b.RawValue, 0 ), a.R, a.G, a.B );
         }
 
 		static Voxel()
@@ -29,14 +30,10 @@ namespace Voxels
 			for ( var i = 1; i < 255; ++i )
 			{
 				_sValueLookup[i] = (i - 127.5f) / 127.5f;
-                _sAlphaLookup[i] = i / 255f;
             }
 
 			_sValueLookup[0] = -1f;
 			_sValueLookup[255] = 1f;
-
-            _sAlphaLookup[0] = 0f;
-            _sAlphaLookup[255] = 1f;
         }
 
 		public readonly byte RawValue;
@@ -45,7 +42,7 @@ namespace Voxels
         public readonly byte B;
 
 		public float Value => _sValueLookup[RawValue];
-        public Color Color => new Color( _sAlphaLookup[R], _sAlphaLookup[G], _sAlphaLookup[B] );
+        public Color Color => new Color( R * ColorScale, G * ColorScale, B * ColorScale );
 
 		public Voxel( float value, byte r, byte g, byte b )
 		{
