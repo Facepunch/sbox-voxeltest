@@ -9,7 +9,7 @@ using Sandbox.UI;
 namespace VoxelTest.UI
 {
     [UseTemplate]
-    public class ColorBlob : Panel
+    public partial class ColorBlob : Panel
     {
         public static int ActiveSlotIndex { get; set; }
 
@@ -18,13 +18,17 @@ namespace VoxelTest.UI
 
         public Color Color => Player.BrushColors[Index];
 
-        public string RedStyle => $"opacity: {Color.r:F2};";
-        public string GreenStyle => $"opacity: {Color.g:F2};";
-        public string BlueStyle => $"opacity: {Color.b:F2};";
+        private Panel RedBlob { get; set; }
+        private Panel GreenBlob { get; set; }
+        private Panel BlueBlob { get; set; }
 
         public override void Tick()
         {
             base.Tick();
+
+            RedBlob.Style.Opacity = Color.r;
+            GreenBlob.Style.Opacity = Color.g;
+            BlueBlob.Style.Opacity = Color.b;
 
             SetClass( "selected", ActiveSlotIndex == Index );
         }

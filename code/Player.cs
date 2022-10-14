@@ -171,6 +171,7 @@ namespace VoxelTest
 
             Cursor.Position = pos;
             Cursor.Scale = BrushSize / 16f;
+            Cursor.RenderColor = BrushColors[MaterialIndex];
 
             if ( !IsServer )
 				return;
